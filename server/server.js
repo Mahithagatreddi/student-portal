@@ -20,7 +20,11 @@ app.use(express.json());
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        /^http:\/\/localhost:517\d$/.test(origin)
+      ) {
         return callback(null, true);
       }
 
