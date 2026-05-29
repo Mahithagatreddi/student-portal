@@ -17,7 +17,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -147,7 +148,8 @@ label {
   gap: 0.4rem;
 }
 
-input {
+input,
+select {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   color: #172033;
@@ -155,7 +157,8 @@ input {
   padding: 0.85rem 0.9rem;
 }
 
-input:focus {
+input:focus,
+select:focus {
   border-color: #16756f;
   box-shadow: 0 0 0 3px rgba(22, 117, 111, 0.16);
 }
@@ -249,7 +252,8 @@ input:focus {
   font-weight: 800;
 }
 
-.details-form {
+.details-form,
+.entry-form {
   display: grid;
   gap: 0.75rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -257,6 +261,8 @@ input:focus {
 
 .details-form .wide,
 .details-form button,
+.entry-form .wide,
+.entry-form button,
 .save-message {
   grid-column: 1 / -1;
 }

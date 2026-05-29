@@ -98,7 +98,12 @@ export default function App() {
 
       <section className="panel auth-card">
         {user ? (
-          <Dashboard dashboard={dashboard} user={user} onLogout={logout} />
+          <Dashboard
+            dashboard={dashboard}
+            user={user}
+            onDashboardUpdate={setDashboard}
+            onLogout={logout}
+          />
         ) : (
           <>
             <div className="tabs" aria-label="Authentication mode">
@@ -172,7 +177,7 @@ export default function App() {
   );
 }
 
-function Dashboard({ dashboard, user, onLogout }) {
+function Dashboard({ dashboard, user, onDashboardUpdate, onLogout }) {
   const [profile, setProfile] = useState({
     rollNumber: user.rollNumber || "",
     department: user.department || "",
@@ -323,6 +328,8 @@ function Dashboard({ dashboard, user, onLogout }) {
             </form>
           </div>
 
+          <DataEntryPanel onDashboardUpdate={onDashboardUpdate} />
+
           <div className="dashboard-section">
             <h3>Courses</h3>
             <div className="course-list">
@@ -401,6 +408,222 @@ function Dashboard({ dashboard, user, onLogout }) {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function DataEntryPanel({ onDashboardUpdate }) {
+  const [entryType, setEntryType] = useState("course");
+  const [entry, setEntry] = useState({
+    title: "",
+    progress: "",
+    subject: "",
+    score: "",
+    maxScore: "100",
+    attended: "",
+    total: "",
+    message: ""
+  });
+  const [entryMessage, setEntryMessage] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  const endpointByType = {
+    course: "/api/courses",
+    mark: "/api/marks",
+    attendance: "/api/attendance",
+    notice: "/api/notices"
+  };
+
+  function updateEntry(event) {
+    setEntry((current) => ({
+      ...current,
+      [event.target.name]: event.target.value
+    }));
+  }
+
+  async function addEntry(event) {
+    event.preventDefault();
+    setAdding(true);
+    setEntryMessage("");
+
+    const payloads = {
+      course: { title: entry.title, progress: entry.progress },
+      mark: { subject: entry.subject, score: entry.score, maxScore: entry.maxScore },
+      attendance: { subject: entry.subject, attended: entry.attended, total: entry.total },
+      notice: { message: entry.message }
+    };
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}${endpointByType[entryType]}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payloads[entryType])
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Could not add entry");
+      }
+
+      onDashboardUpdate(data);
+      setEntry({
+        title: "",
+        progress: "",
+        subject: "",
+        score: "",
+        maxScore: "100",
+        attended: "",
+        total: "",
+        message: ""
+      });
+      setEntryMessage("Entry added successfully");
+    } catch (error) {
+      setEntryMessage(error.message);
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  return (
+    <div className="dashboard-section">
+      <h3>Data Entry</h3>
+      <form className="entry-form" onSubmit={addEntry}>
+        <label>
+          Type
+          <select value={entryType} onChange={(event) => setEntryType(event.target.value)}>
+            <option value="course">Course</option>
+            <option value="mark">Marks</option>
+            <option value="attendance">Attendance</option>
+            <option value="notice">Notice</option>
+          </select>
+        </label>
+
+        {entryType === "course" && (
+          <>
+            <label>
+              Course Title
+              <input
+                name="title"
+                value={entry.title}
+                onChange={updateEntry}
+                placeholder="Example: Python"
+                required
+              />
+            </label>
+            <label>
+              Progress
+              <input
+                name="progress"
+                type="number"
+                min="0"
+                max="100"
+                value={entry.progress}
+                onChange={updateEntry}
+                placeholder="0-100"
+                required
+              />
+            </label>
+          </>
+        )}
+
+        {entryType === "mark" && (
+          <>
+            <label>
+              Subject
+              <input
+                name="subject"
+                value={entry.subject}
+                onChange={updateEntry}
+                placeholder="Example: Python"
+                required
+              />
+            </label>
+            <label>
+              Score
+              <input
+                name="score"
+                type="number"
+                min="0"
+                value={entry.score}
+                onChange={updateEntry}
+                placeholder="Marks scored"
+                required
+              />
+            </label>
+            <label>
+              Max Score
+              <input
+                name="maxScore"
+                type="number"
+                min="1"
+                value={entry.maxScore}
+                onChange={updateEntry}
+                required
+              />
+            </label>
+          </>
+        )}
+
+        {entryType === "attendance" && (
+          <>
+            <label>
+              Subject
+              <input
+                name="subject"
+                value={entry.subject}
+                onChange={updateEntry}
+                placeholder="Example: Python"
+                required
+              />
+            </label>
+            <label>
+              Attended
+              <input
+                name="attended"
+                type="number"
+                min="0"
+                value={entry.attended}
+                onChange={updateEntry}
+                required
+              />
+            </label>
+            <label>
+              Total
+              <input
+                name="total"
+                type="number"
+                min="1"
+                value={entry.total}
+                onChange={updateEntry}
+                required
+              />
+            </label>
+          </>
+        )}
+
+        {entryType === "notice" && (
+          <label className="wide">
+            Notice
+            <input
+              name="message"
+              value={entry.message}
+              onChange={updateEntry}
+              placeholder="Enter notice"
+              required
+            />
+          </label>
+        )}
+
+        {entryMessage && <p className="save-message">{entryMessage}</p>}
+
+        <button type="submit" disabled={adding}>
+          {adding ? "Adding..." : "Add entry"}
+        </button>
+      </form>
     </div>
   );
 }

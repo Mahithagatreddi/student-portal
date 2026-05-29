@@ -142,6 +142,54 @@ async function seedDashboardData(userId) {
   ]);
 }
 
+async function buildDashboard(user) {
+  await seedDashboardData(user._id);
+
+  const [courses, marks, attendance, notices] = await Promise.all([
+    Course.find({ user: user._id }).sort({ createdAt: 1 }),
+    Mark.find({ user: user._id }).sort({ createdAt: 1 }),
+    Attendance.find({ user: user._id }).sort({ createdAt: 1 }),
+    Notice.find({ user: user._id }).sort({ createdAt: 1 })
+  ]);
+
+  const activeCourses = courses.length;
+  const averageAttendance =
+    attendance.length === 0
+      ? 0
+      : Math.round(
+          attendance.reduce((sum, item) => sum + (item.attended / item.total) * 100, 0) /
+            attendance.length
+        );
+
+  return {
+    user: sanitizeUser(user),
+    stats: {
+      attendance: averageAttendance,
+      completedAssignments: 8,
+      pendingAssignments: 2,
+      activeCourses
+    },
+    courses: courses.map((course) => ({
+      id: course._id,
+      title: course.title,
+      progress: course.progress
+    })),
+    marks: marks.map((mark) => ({
+      id: mark._id,
+      subject: mark.subject,
+      score: mark.score,
+      maxScore: mark.maxScore
+    })),
+    attendance: attendance.map((item) => ({
+      id: item._id,
+      subject: item.subject,
+      attended: item.attended,
+      total: item.total
+    })),
+    notices: notices.map((notice) => notice.message)
+  };
+}
+
 function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
@@ -245,53 +293,87 @@ app.get("/api/dashboard", requireAuth, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    await seedDashboardData(user._id);
-
-    const [courses, marks, attendance, notices] = await Promise.all([
-      Course.find({ user: user._id }).sort({ createdAt: 1 }),
-      Mark.find({ user: user._id }).sort({ createdAt: 1 }),
-      Attendance.find({ user: user._id }).sort({ createdAt: 1 }),
-      Notice.find({ user: user._id }).sort({ createdAt: 1 })
-    ]);
-
-    const activeCourses = courses.length;
-    const averageAttendance =
-      attendance.length === 0
-        ? 0
-        : Math.round(
-            attendance.reduce((sum, item) => sum + (item.attended / item.total) * 100, 0) /
-              attendance.length
-          );
-
-    return res.json({
-      user: sanitizeUser(user),
-      stats: {
-        attendance: averageAttendance,
-        completedAssignments: 8,
-        pendingAssignments: 2,
-        activeCourses
-      },
-      courses: courses.map((course) => ({
-        id: course._id,
-        title: course.title,
-        progress: course.progress
-      })),
-      marks: marks.map((mark) => ({
-        id: mark._id,
-        subject: mark.subject,
-        score: mark.score,
-        maxScore: mark.maxScore
-      })),
-      attendance: attendance.map((item) => ({
-        id: item._id,
-        subject: item.subject,
-        attended: item.attended,
-        total: item.total
-      })),
-      notices: notices.map((notice) => notice.message)
-    });
+    return res.json(await buildDashboard(user));
   } catch (error) {
     return res.status(500).json({ message: "Could not load dashboard" });
+  }
+});
+
+app.post("/api/courses", requireAuth, async (req, res) => {
+  try {
+    const { title, progress } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!title) return res.status(400).json({ message: "Course title is required" });
+
+    await Course.create({
+      user: user._id,
+      title,
+      progress: Number(progress) || 0
+    });
+
+    return res.status(201).json(await buildDashboard(user));
+  } catch (error) {
+    return res.status(500).json({ message: "Could not add course" });
+  }
+});
+
+app.post("/api/marks", requireAuth, async (req, res) => {
+  try {
+    const { subject, score, maxScore } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!subject) return res.status(400).json({ message: "Subject is required" });
+
+    await Mark.create({
+      user: user._id,
+      subject,
+      score: Number(score) || 0,
+      maxScore: Number(maxScore) || 100
+    });
+
+    return res.status(201).json(await buildDashboard(user));
+  } catch (error) {
+    return res.status(500).json({ message: "Could not add marks" });
+  }
+});
+
+app.post("/api/attendance", requireAuth, async (req, res) => {
+  try {
+    const { subject, attended, total } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!subject) return res.status(400).json({ message: "Subject is required" });
+
+    await Attendance.create({
+      user: user._id,
+      subject,
+      attended: Number(attended) || 0,
+      total: Number(total) || 1
+    });
+
+    return res.status(201).json(await buildDashboard(user));
+  } catch (error) {
+    return res.status(500).json({ message: "Could not add attendance" });
+  }
+});
+
+app.post("/api/notices", requireAuth, async (req, res) => {
+  try {
+    const { message } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!message) return res.status(400).json({ message: "Notice message is required" });
+
+    await Notice.create({ user: user._id, message });
+
+    return res.status(201).json(await buildDashboard(user));
+  } catch (error) {
+    return res.status(500).json({ message: "Could not add notice" });
   }
 });
 
