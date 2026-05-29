@@ -155,6 +155,38 @@ app.get("/api/profile", requireAuth, async (req, res) => {
   }
 });
 
+app.get("/api/dashboard", requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({
+      user: sanitizeUser(user),
+      stats: {
+        attendance: 92,
+        completedAssignments: 8,
+        pendingAssignments: 2,
+        activeCourses: 4
+      },
+      courses: [
+        { id: "cs101", title: "Web Development", progress: 78 },
+        { id: "db201", title: "Database Systems", progress: 64 },
+        { id: "js301", title: "JavaScript Programming", progress: 86 },
+        { id: "ux110", title: "UI Design Basics", progress: 58 }
+      ],
+      notices: [
+        "Submit database assignment before Friday.",
+        "Web Development practical review is scheduled this week.",
+        "Attendance report has been updated."
+      ]
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Could not load dashboard" });
+  }
+});
+
 async function startServer() {
   if (!MONGO_URI) {
     console.error("MONGO_URI is missing. Add it to server/.env before starting.");

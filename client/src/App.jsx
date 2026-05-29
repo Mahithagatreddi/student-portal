@@ -7,6 +7,7 @@ export default function App() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [token, setToken] = useState(() => localStorage.getItem("token") || "");
   const [user, setUser] = useState(null);
+  const [dashboard, setDashboard] = useState(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -16,17 +17,19 @@ export default function App() {
   useEffect(() => {
     if (!token) return;
 
-    fetch(`${API_URL}/api/profile`, {
+    fetch(`${API_URL}/api/dashboard`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(async (response) => {
         const data = await response.json();
-        if (!response.ok) throw new Error(data.message || "Profile request failed");
+        if (!response.ok) throw new Error(data.message || "Dashboard request failed");
         setUser(data.user);
+        setDashboard(data);
       })
       .catch(() => {
         localStorage.removeItem("token");
         setToken("");
+        setDashboard(null);
       });
   }, [token]);
 
@@ -60,6 +63,7 @@ export default function App() {
       localStorage.setItem("token", data.token);
       setToken(data.token);
       setUser(data.user);
+      setDashboard(null);
       setForm({ name: "", email: "", password: "" });
     } catch (error) {
       setMessage(error.message);
@@ -72,6 +76,7 @@ export default function App() {
     localStorage.removeItem("token");
     setToken("");
     setUser(null);
+    setDashboard(null);
     setMessage("");
   }
 
@@ -93,14 +98,7 @@ export default function App() {
 
       <section className="panel auth-card">
         {user ? (
-          <div className="profile">
-            <p className="eyebrow">Signed in</p>
-            <h2>{user.name}</h2>
-            <p>{user.email}</p>
-            <button type="button" onClick={logout}>
-              Logout
-            </button>
-          </div>
+          <Dashboard dashboard={dashboard} user={user} onLogout={logout} />
         ) : (
           <>
             <div className="tabs" aria-label="Authentication mode">
@@ -171,5 +169,74 @@ export default function App() {
         )}
       </section>
     </main>
+  );
+}
+
+function Dashboard({ dashboard, user, onLogout }) {
+  const stats = dashboard?.stats;
+  const courses = dashboard?.courses || [];
+  const notices = dashboard?.notices || [];
+
+  return (
+    <div className="dashboard">
+      <div className="dashboard-head">
+        <div>
+          <p className="eyebrow">Student Dashboard</p>
+          <h2>{user.name}</h2>
+          <p>{user.email}</p>
+        </div>
+        <button type="button" onClick={onLogout}>
+          Logout
+        </button>
+      </div>
+
+      {!dashboard ? (
+        <p className="loading">Loading dashboard...</p>
+      ) : (
+        <>
+          <div className="metrics">
+            <Metric label="Attendance" value={`${stats.attendance}%`} />
+            <Metric label="Active Courses" value={stats.activeCourses} />
+            <Metric label="Completed" value={stats.completedAssignments} />
+            <Metric label="Pending" value={stats.pendingAssignments} />
+          </div>
+
+          <div className="dashboard-section">
+            <h3>Courses</h3>
+            <div className="course-list">
+              {courses.map((course) => (
+                <article className="course" key={course.id}>
+                  <div>
+                    <h4>{course.title}</h4>
+                    <p>{course.progress}% complete</p>
+                  </div>
+                  <div className="progress" aria-label={`${course.title} progress`}>
+                    <span style={{ width: `${course.progress}%` }} />
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <h3>Notices</h3>
+            <ul className="notice-list">
+              {notices.map((notice) => (
+                <li key={notice}>{notice}</li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Metric({ label, value }) {
+  return (
+    <div className="metric">
+      <strong>{value}</strong>
+      <span>{label}</span>
+    </div>
   );
 }

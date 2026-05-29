@@ -169,19 +169,123 @@ input:focus {
   padding: 0.75rem;
 }
 
-.profile {
+.dashboard {
   display: grid;
-  gap: 0.8rem;
-  padding: 1rem;
+  gap: 1rem;
 }
 
-.profile h2,
-.profile p {
+.dashboard-head {
+  align-items: start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 0.5rem;
+}
+
+.dashboard-head h2,
+.dashboard-head p {
   margin: 0;
 }
 
-.profile p {
+.dashboard-head p {
   color: #4f5b6d;
+}
+
+.dashboard-head button {
+  min-width: 96px;
+}
+
+.loading {
+  color: #4f5b6d;
+  margin: 0.5rem;
+}
+
+.metrics {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.metric {
+  background: #f7fafc;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.9rem;
+}
+
+.metric strong {
+  color: #172033;
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.metric span {
+  color: #5d697b;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.dashboard-section {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dashboard-section h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.course-list,
+.notice-list {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+}
+
+.course {
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.85rem;
+}
+
+.course h4,
+.course p {
+  margin: 0;
+}
+
+.course p {
+  color: #5d697b;
+  font-size: 0.9rem;
+}
+
+.progress {
+  background: #e8eef5;
+  border-radius: 999px;
+  height: 0.55rem;
+  overflow: hidden;
+}
+
+.progress span {
+  background: #16756f;
+  display: block;
+  height: 100%;
+}
+
+.notice-list {
+  list-style: none;
+}
+
+.notice-list li {
+  background: #fff8ec;
+  border: 1px solid #f4d9a7;
+  border-radius: 8px;
+  color: #5d4b25;
+  padding: 0.75rem;
 }
 
 @media (max-width: 820px) {
