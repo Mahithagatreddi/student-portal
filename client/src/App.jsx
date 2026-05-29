@@ -186,6 +186,7 @@ function Dashboard({ dashboard, user, onLogout }) {
   const stats = dashboard?.stats;
   const courses = dashboard?.courses || [];
   const marks = dashboard?.marks || [];
+  const attendance = dashboard?.attendance || [];
   const notices = dashboard?.notices || [];
   const totalScore = marks.reduce((sum, item) => sum + item.score, 0);
   const totalMaxScore = marks.reduce((sum, item) => sum + item.maxScore, 0);
@@ -361,6 +362,32 @@ function Dashboard({ dashboard, user, onLogout }) {
                   </span>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <h3>Attendance</h3>
+            <div className="attendance-list">
+              {attendance.map((item) => {
+                const attendancePercent = Math.round((item.attended / item.total) * 100);
+
+                return (
+                  <article className="attendance-card" key={item.id}>
+                    <div className="attendance-top">
+                      <div>
+                        <h4>{item.subject}</h4>
+                        <p>
+                          {item.attended}/{item.total} classes attended
+                        </p>
+                      </div>
+                      <strong>{attendancePercent}%</strong>
+                    </div>
+                    <div className="progress attendance-progress">
+                      <span style={{ width: `${attendancePercent}%` }} />
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </div>
 

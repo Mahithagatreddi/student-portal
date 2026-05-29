@@ -192,6 +192,12 @@ app.get("/api/dashboard", requireAuth, async (req, res) => {
         { id: "m3", subject: "JavaScript Programming", score: 91, maxScore: 100 },
         { id: "m4", subject: "UI Design Basics", score: 74, maxScore: 100 }
       ],
+      attendance: [
+        { id: "a1", subject: "Web Development", attended: 34, total: 38 },
+        { id: "a2", subject: "Database Systems", attended: 29, total: 34 },
+        { id: "a3", subject: "JavaScript Programming", attended: 36, total: 39 },
+        { id: "a4", subject: "UI Design Basics", attended: 27, total: 32 }
+      ],
       notices: [
         "Submit database assignment before Friday.",
         "Web Development practical review is scheduled this week.",
