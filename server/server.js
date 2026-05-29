@@ -50,6 +50,48 @@ const userSchema = new mongoose.Schema(
 
 const User = mongoose.model("User", userSchema);
 
+const courseSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    title: { type: String, required: true, trim: true },
+    progress: { type: Number, required: true, min: 0, max: 100 }
+  },
+  { timestamps: true }
+);
+
+const markSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    subject: { type: String, required: true, trim: true },
+    score: { type: Number, required: true, min: 0 },
+    maxScore: { type: Number, required: true, min: 1 }
+  },
+  { timestamps: true }
+);
+
+const attendanceSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    subject: { type: String, required: true, trim: true },
+    attended: { type: Number, required: true, min: 0 },
+    total: { type: Number, required: true, min: 1 }
+  },
+  { timestamps: true }
+);
+
+const noticeSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    message: { type: String, required: true, trim: true }
+  },
+  { timestamps: true }
+);
+
+const Course = mongoose.model("Course", courseSchema);
+const Mark = mongoose.model("Mark", markSchema);
+const Attendance = mongoose.model("Attendance", attendanceSchema);
+const Notice = mongoose.model("Notice", noticeSchema);
+
 function createToken(user) {
   return jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
     expiresIn: "7d"
@@ -67,6 +109,37 @@ function sanitizeUser(user) {
     phone: user.phone || "",
     address: user.address || ""
   };
+}
+
+async function seedDashboardData(userId) {
+  const existingCourses = await Course.countDocuments({ user: userId });
+  if (existingCourses > 0) return;
+
+  await Promise.all([
+    Course.insertMany([
+      { user: userId, title: "Web Development", progress: 78 },
+      { user: userId, title: "Database Systems", progress: 64 },
+      { user: userId, title: "JavaScript Programming", progress: 86 },
+      { user: userId, title: "UI Design Basics", progress: 58 }
+    ]),
+    Mark.insertMany([
+      { user: userId, subject: "Web Development", score: 86, maxScore: 100 },
+      { user: userId, subject: "Database Systems", score: 78, maxScore: 100 },
+      { user: userId, subject: "JavaScript Programming", score: 91, maxScore: 100 },
+      { user: userId, subject: "UI Design Basics", score: 74, maxScore: 100 }
+    ]),
+    Attendance.insertMany([
+      { user: userId, subject: "Web Development", attended: 34, total: 38 },
+      { user: userId, subject: "Database Systems", attended: 29, total: 34 },
+      { user: userId, subject: "JavaScript Programming", attended: 36, total: 39 },
+      { user: userId, subject: "UI Design Basics", attended: 27, total: 32 }
+    ]),
+    Notice.insertMany([
+      { user: userId, message: "Submit database assignment before Friday." },
+      { user: userId, message: "Web Development practical review is scheduled this week." },
+      { user: userId, message: "Attendance report has been updated." }
+    ])
+  ]);
 }
 
 function requireAuth(req, res, next) {
@@ -172,37 +245,50 @@ app.get("/api/dashboard", requireAuth, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    await seedDashboardData(user._id);
+
+    const [courses, marks, attendance, notices] = await Promise.all([
+      Course.find({ user: user._id }).sort({ createdAt: 1 }),
+      Mark.find({ user: user._id }).sort({ createdAt: 1 }),
+      Attendance.find({ user: user._id }).sort({ createdAt: 1 }),
+      Notice.find({ user: user._id }).sort({ createdAt: 1 })
+    ]);
+
+    const activeCourses = courses.length;
+    const averageAttendance =
+      attendance.length === 0
+        ? 0
+        : Math.round(
+            attendance.reduce((sum, item) => sum + (item.attended / item.total) * 100, 0) /
+              attendance.length
+          );
+
     return res.json({
       user: sanitizeUser(user),
       stats: {
-        attendance: 92,
+        attendance: averageAttendance,
         completedAssignments: 8,
         pendingAssignments: 2,
-        activeCourses: 4
+        activeCourses
       },
-      courses: [
-        { id: "cs101", title: "Web Development", progress: 78 },
-        { id: "db201", title: "Database Systems", progress: 64 },
-        { id: "js301", title: "JavaScript Programming", progress: 86 },
-        { id: "ux110", title: "UI Design Basics", progress: 58 }
-      ],
-      marks: [
-        { id: "m1", subject: "Web Development", score: 86, maxScore: 100 },
-        { id: "m2", subject: "Database Systems", score: 78, maxScore: 100 },
-        { id: "m3", subject: "JavaScript Programming", score: 91, maxScore: 100 },
-        { id: "m4", subject: "UI Design Basics", score: 74, maxScore: 100 }
-      ],
-      attendance: [
-        { id: "a1", subject: "Web Development", attended: 34, total: 38 },
-        { id: "a2", subject: "Database Systems", attended: 29, total: 34 },
-        { id: "a3", subject: "JavaScript Programming", attended: 36, total: 39 },
-        { id: "a4", subject: "UI Design Basics", attended: 27, total: 32 }
-      ],
-      notices: [
-        "Submit database assignment before Friday.",
-        "Web Development practical review is scheduled this week.",
-        "Attendance report has been updated."
-      ]
+      courses: courses.map((course) => ({
+        id: course._id,
+        title: course.title,
+        progress: course.progress
+      })),
+      marks: marks.map((mark) => ({
+        id: mark._id,
+        subject: mark.subject,
+        score: mark.score,
+        maxScore: mark.maxScore
+      })),
+      attendance: attendance.map((item) => ({
+        id: item._id,
+        subject: item.subject,
+        attended: item.attended,
+        total: item.total
+      })),
+      notices: notices.map((notice) => notice.message)
     });
   } catch (error) {
     return res.status(500).json({ message: "Could not load dashboard" });
