@@ -173,9 +173,65 @@ export default function App() {
 }
 
 function Dashboard({ dashboard, user, onLogout }) {
+  const [profile, setProfile] = useState({
+    rollNumber: user.rollNumber || "",
+    department: user.department || "",
+    year: user.year || "",
+    phone: user.phone || "",
+    address: user.address || ""
+  });
+  const [saveMessage, setSaveMessage] = useState("");
+  const [saving, setSaving] = useState(false);
+
   const stats = dashboard?.stats;
   const courses = dashboard?.courses || [];
   const notices = dashboard?.notices || [];
+
+  useEffect(() => {
+    setProfile({
+      rollNumber: user.rollNumber || "",
+      department: user.department || "",
+      year: user.year || "",
+      phone: user.phone || "",
+      address: user.address || ""
+    });
+  }, [user]);
+
+  function updateProfileField(event) {
+    setProfile((current) => ({
+      ...current,
+      [event.target.name]: event.target.value
+    }));
+  }
+
+  async function saveProfile(event) {
+    event.preventDefault();
+    setSaving(true);
+    setSaveMessage("");
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(profile)
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Profile update failed");
+      }
+
+      setSaveMessage("Profile saved successfully");
+    } catch (error) {
+      setSaveMessage(error.message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="dashboard">
@@ -199,6 +255,67 @@ function Dashboard({ dashboard, user, onLogout }) {
             <Metric label="Active Courses" value={stats.activeCourses} />
             <Metric label="Completed" value={stats.completedAssignments} />
             <Metric label="Pending" value={stats.pendingAssignments} />
+          </div>
+
+          <div className="dashboard-section">
+            <h3>Student Details</h3>
+            <form className="details-form" onSubmit={saveProfile}>
+              <label>
+                Roll Number
+                <input
+                  name="rollNumber"
+                  value={profile.rollNumber}
+                  onChange={updateProfileField}
+                  placeholder="Example: 22CS101"
+                />
+              </label>
+
+              <label>
+                Department
+                <input
+                  name="department"
+                  value={profile.department}
+                  onChange={updateProfileField}
+                  placeholder="Example: Computer Science"
+                />
+              </label>
+
+              <label>
+                Year
+                <input
+                  name="year"
+                  value={profile.year}
+                  onChange={updateProfileField}
+                  placeholder="Example: 3rd Year"
+                />
+              </label>
+
+              <label>
+                Phone
+                <input
+                  name="phone"
+                  value={profile.phone}
+                  onChange={updateProfileField}
+                  placeholder="Example: 9876543210"
+                />
+              </label>
+
+              <label className="wide">
+                Address
+                <input
+                  name="address"
+                  value={profile.address}
+                  onChange={updateProfileField}
+                  placeholder="Your address"
+                />
+              </label>
+
+              {saveMessage && <p className="save-message">{saveMessage}</p>}
+
+              <button type="submit" disabled={saving}>
+                {saving ? "Saving..." : "Save details"}
+              </button>
+            </form>
           </div>
 
           <div className="dashboard-section">

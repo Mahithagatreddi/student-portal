@@ -38,7 +38,12 @@ const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: true }
+    password: { type: String, required: true },
+    rollNumber: { type: String, trim: true, default: "" },
+    department: { type: String, trim: true, default: "" },
+    year: { type: String, trim: true, default: "" },
+    phone: { type: String, trim: true, default: "" },
+    address: { type: String, trim: true, default: "" }
   },
   { timestamps: true }
 );
@@ -55,7 +60,12 @@ function sanitizeUser(user) {
   return {
     id: user._id,
     name: user.name,
-    email: user.email
+    email: user.email,
+    rollNumber: user.rollNumber || "",
+    department: user.department || "",
+    year: user.year || "",
+    phone: user.phone || "",
+    address: user.address || ""
   };
 }
 
@@ -184,6 +194,32 @@ app.get("/api/dashboard", requireAuth, async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ message: "Could not load dashboard" });
+  }
+});
+
+app.put("/api/profile", requireAuth, async (req, res) => {
+  try {
+    const { rollNumber, department, year, phone, address } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        rollNumber: rollNumber || "",
+        department: department || "",
+        year: year || "",
+        phone: phone || "",
+        address: address || ""
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({ user: sanitizeUser(user) });
+  } catch (error) {
+    return res.status(500).json({ message: "Could not update profile" });
   }
 });
 
