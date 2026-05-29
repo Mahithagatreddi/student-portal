@@ -186,6 +186,12 @@ app.get("/api/dashboard", requireAuth, async (req, res) => {
         { id: "js301", title: "JavaScript Programming", progress: 86 },
         { id: "ux110", title: "UI Design Basics", progress: 58 }
       ],
+      marks: [
+        { id: "m1", subject: "Web Development", score: 86, maxScore: 100 },
+        { id: "m2", subject: "Database Systems", score: 78, maxScore: 100 },
+        { id: "m3", subject: "JavaScript Programming", score: 91, maxScore: 100 },
+        { id: "m4", subject: "UI Design Basics", score: 74, maxScore: 100 }
+      ],
       notices: [
         "Submit database assignment before Friday.",
         "Web Development practical review is scheduled this week.",

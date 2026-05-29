@@ -185,7 +185,11 @@ function Dashboard({ dashboard, user, onLogout }) {
 
   const stats = dashboard?.stats;
   const courses = dashboard?.courses || [];
+  const marks = dashboard?.marks || [];
   const notices = dashboard?.notices || [];
+  const totalScore = marks.reduce((sum, item) => sum + item.score, 0);
+  const totalMaxScore = marks.reduce((sum, item) => sum + item.maxScore, 0);
+  const percentage = totalMaxScore ? Math.round((totalScore / totalMaxScore) * 100) : 0;
 
   useEffect(() => {
     setProfile({
@@ -331,6 +335,31 @@ function Dashboard({ dashboard, user, onLogout }) {
                     <span style={{ width: `${course.progress}%` }} />
                   </div>
                 </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <div className="section-title">
+              <h3>Marks</h3>
+              <span>{percentage}% Overall</span>
+            </div>
+            <div className="marks-table">
+              <div className="marks-row marks-head">
+                <span>Subject</span>
+                <span>Marks</span>
+                <span>Status</span>
+              </div>
+              {marks.map((item) => (
+                <div className="marks-row" key={item.id}>
+                  <span>{item.subject}</span>
+                  <span>
+                    {item.score}/{item.maxScore}
+                  </span>
+                  <span className={item.score >= 40 ? "pass" : "fail"}>
+                    {item.score >= 40 ? "Pass" : "Fail"}
+                  </span>
+                </div>
               ))}
             </div>
           </div>
