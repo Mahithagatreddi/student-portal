@@ -203,6 +203,28 @@ select:focus {
   margin: 0.5rem;
 }
 
+.dashboard-options {
+  background: #edf2f7;
+  border-radius: 8px;
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0.35rem;
+}
+
+.dashboard-options button {
+  background: transparent;
+  color: #4f5b6d;
+  min-height: 44px;
+  padding: 0.65rem;
+}
+
+.dashboard-options button.active {
+  background: #ffffff;
+  color: #172033;
+  box-shadow: 0 8px 18px rgba(23, 32, 51, 0.08);
+}
+
 .metrics {
   display: grid;
   gap: 0.75rem;
@@ -418,5 +440,11 @@ select:focus {
 
   .intro {
     min-height: auto;
+  }
+
+  .details-form,
+  .entry-form,
+  .metrics {
+    grid-template-columns: 1fr;
   }
 }

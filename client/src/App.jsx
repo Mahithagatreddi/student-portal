@@ -178,6 +178,7 @@ export default function App() {
 }
 
 function Dashboard({ dashboard, user, onDashboardUpdate, onLogout }) {
+  const [activeSection, setActiveSection] = useState("overview");
   const [profile, setProfile] = useState({
     rollNumber: user.rollNumber || "",
     department: user.department || "",
@@ -196,6 +197,15 @@ function Dashboard({ dashboard, user, onDashboardUpdate, onLogout }) {
   const totalScore = marks.reduce((sum, item) => sum + item.score, 0);
   const totalMaxScore = marks.reduce((sum, item) => sum + item.maxScore, 0);
   const percentage = totalMaxScore ? Math.round((totalScore / totalMaxScore) * 100) : 0;
+  const sections = [
+    ["overview", "Overview"],
+    ["details", "Student Details"],
+    ["entry", "Data Entry"],
+    ["courses", "Courses"],
+    ["marks", "Marks"],
+    ["attendance", "Attendance"],
+    ["notices", "Notices"]
+  ];
 
   useEffect(() => {
     setProfile({
@@ -260,14 +270,33 @@ function Dashboard({ dashboard, user, onDashboardUpdate, onLogout }) {
         <p className="loading">Loading dashboard...</p>
       ) : (
         <>
-          <div className="metrics">
-            <Metric label="Attendance" value={`${stats.attendance}%`} />
-            <Metric label="Active Courses" value={stats.activeCourses} />
-            <Metric label="Completed" value={stats.completedAssignments} />
-            <Metric label="Pending" value={stats.pendingAssignments} />
+          <div className="dashboard-options" aria-label="Dashboard sections">
+            {sections.map(([value, label]) => (
+              <button
+                className={activeSection === value ? "active" : ""}
+                key={value}
+                type="button"
+                onClick={() => setActiveSection(value)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
-          <div className="dashboard-section">
+          {activeSection === "overview" && (
+            <div className="dashboard-section">
+              <h3>Overview</h3>
+              <div className="metrics">
+                <Metric label="Attendance" value={`${stats.attendance}%`} />
+                <Metric label="Active Courses" value={stats.activeCourses} />
+                <Metric label="Completed" value={stats.completedAssignments} />
+                <Metric label="Pending" value={stats.pendingAssignments} />
+              </div>
+            </div>
+          )}
+
+          {activeSection === "details" && (
+            <div className="dashboard-section">
             <h3>Student Details</h3>
             <form className="details-form" onSubmit={saveProfile}>
               <label>
@@ -326,11 +355,13 @@ function Dashboard({ dashboard, user, onDashboardUpdate, onLogout }) {
                 {saving ? "Saving..." : "Save details"}
               </button>
             </form>
-          </div>
+            </div>
+          )}
 
-          <DataEntryPanel onDashboardUpdate={onDashboardUpdate} />
+          {activeSection === "entry" && <DataEntryPanel onDashboardUpdate={onDashboardUpdate} />}
 
-          <div className="dashboard-section">
+          {activeSection === "courses" && (
+            <div className="dashboard-section">
             <h3>Courses</h3>
             <div className="course-list">
               {courses.map((course) => (
@@ -345,9 +376,11 @@ function Dashboard({ dashboard, user, onDashboardUpdate, onLogout }) {
                 </article>
               ))}
             </div>
-          </div>
+            </div>
+          )}
 
-          <div className="dashboard-section">
+          {activeSection === "marks" && (
+            <div className="dashboard-section">
             <div className="section-title">
               <h3>Marks</h3>
               <span>{percentage}% Overall</span>
@@ -370,9 +403,11 @@ function Dashboard({ dashboard, user, onDashboardUpdate, onLogout }) {
                 </div>
               ))}
             </div>
-          </div>
+            </div>
+          )}
 
-          <div className="dashboard-section">
+          {activeSection === "attendance" && (
+            <div className="dashboard-section">
             <h3>Attendance</h3>
             <div className="attendance-list">
               {attendance.map((item) => {
@@ -396,16 +431,19 @@ function Dashboard({ dashboard, user, onDashboardUpdate, onLogout }) {
                 );
               })}
             </div>
-          </div>
+            </div>
+          )}
 
-          <div className="dashboard-section">
+          {activeSection === "notices" && (
+            <div className="dashboard-section">
             <h3>Notices</h3>
             <ul className="notice-list">
               {notices.map((notice) => (
                 <li key={notice}>{notice}</li>
               ))}
             </ul>
-          </div>
+            </div>
+          )}
         </>
       )}
     </div>
