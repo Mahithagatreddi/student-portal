@@ -253,6 +253,27 @@ function Dashboard({ dashboard, user, onDashboardUpdate, onLogout }) {
     }
   }
 
+  async function deleteEntry(collection, id) {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/${collection}/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Could not delete entry");
+      }
+
+      onDashboardUpdate(data);
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
   return (
     <div className="dashboard">
       <div className="dashboard-head">
@@ -370,6 +391,13 @@ function Dashboard({ dashboard, user, onDashboardUpdate, onLogout }) {
                     <h4>{course.title}</h4>
                     <p>{course.progress}% complete</p>
                   </div>
+                  <button
+                    className="delete-button"
+                    type="button"
+                    onClick={() => deleteEntry("courses", course.id)}
+                  >
+                    Delete
+                  </button>
                   <div className="progress" aria-label={`${course.title} progress`}>
                     <span style={{ width: `${course.progress}%` }} />
                   </div>
@@ -400,6 +428,13 @@ function Dashboard({ dashboard, user, onDashboardUpdate, onLogout }) {
                   <span className={item.score >= 40 ? "pass" : "fail"}>
                     {item.score >= 40 ? "Pass" : "Fail"}
                   </span>
+                  <button
+                    className="delete-button compact"
+                    type="button"
+                    onClick={() => deleteEntry("marks", item.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
               ))}
             </div>
@@ -424,6 +459,13 @@ function Dashboard({ dashboard, user, onDashboardUpdate, onLogout }) {
                       </div>
                       <strong>{attendancePercent}%</strong>
                     </div>
+                    <button
+                      className="delete-button"
+                      type="button"
+                      onClick={() => deleteEntry("attendance", item.id)}
+                    >
+                      Delete
+                    </button>
                     <div className="progress attendance-progress">
                       <span style={{ width: `${attendancePercent}%` }} />
                     </div>
@@ -439,7 +481,16 @@ function Dashboard({ dashboard, user, onDashboardUpdate, onLogout }) {
             <h3>Notices</h3>
             <ul className="notice-list">
               {notices.map((notice) => (
-                <li key={notice}>{notice}</li>
+                <li key={notice.id}>
+                  <span>{notice.message}</span>
+                  <button
+                    className="delete-button compact"
+                    type="button"
+                    onClick={() => deleteEntry("notices", notice.id)}
+                  >
+                    Delete
+                  </button>
+                </li>
               ))}
             </ul>
             </div>

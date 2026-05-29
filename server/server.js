@@ -186,7 +186,10 @@ async function buildDashboard(user) {
       attended: item.attended,
       total: item.total
     })),
-    notices: notices.map((notice) => notice.message)
+    notices: notices.map((notice) => ({
+      id: notice._id,
+      message: notice.message
+    }))
   };
 }
 
@@ -374,6 +377,28 @@ app.post("/api/notices", requireAuth, async (req, res) => {
     return res.status(201).json(await buildDashboard(user));
   } catch (error) {
     return res.status(500).json({ message: "Could not add notice" });
+  }
+});
+
+app.delete("/api/:collection/:id", requireAuth, async (req, res) => {
+  try {
+    const models = {
+      courses: Course,
+      marks: Mark,
+      attendance: Attendance,
+      notices: Notice
+    };
+    const Model = models[req.params.collection];
+    const user = await User.findById(req.user.id);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!Model) return res.status(400).json({ message: "Invalid collection" });
+
+    await Model.findOneAndDelete({ _id: req.params.id, user: user._id });
+
+    return res.json(await buildDashboard(user));
+  } catch (error) {
+    return res.status(500).json({ message: "Could not delete entry" });
   }
 });
 

@@ -342,10 +342,14 @@ select:focus {
 }
 
 .notice-list li {
+  align-items: center;
   background: #fff8ec;
   border: 1px solid #f4d9a7;
   border-radius: 8px;
   color: #5d4b25;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
   padding: 0.75rem;
 }
 
@@ -358,7 +362,7 @@ select:focus {
 .marks-row {
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: minmax(0, 1.4fr) 0.7fr 0.6fr;
+  grid-template-columns: minmax(0, 1.4fr) 0.7fr 0.6fr auto;
   padding: 0.75rem;
 }
 
@@ -391,6 +395,23 @@ select:focus {
 .fail {
   background: #fff1f1;
   color: #9f1d1d;
+}
+
+.delete-button {
+  background: #fff1f1;
+  border: 1px solid #ffc9c9;
+  color: #9f1d1d;
+  justify-self: start;
+  padding: 0.45rem 0.65rem;
+}
+
+.delete-button:hover {
+  background: #ffe2e2;
+}
+
+.delete-button.compact {
+  font-size: 0.78rem;
+  padding: 0.25rem 0.5rem;
 }
 
 .attendance-list {
